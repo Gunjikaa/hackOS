@@ -1,0 +1,29 @@
+{
+  "name": "hackos",
+  "version": "1.0.0",
+  "description": "HackOS — College-first hackathon and event management platform",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "keywords": [
+    "hackathon",
+    "college",
+    "management",
+    "express",
+    "nextjs",
+    "prisma",
+    "postgresql"
+  ],
+  "author": "HackOS Team",
+  "license": "UNLICENSED"
+}
