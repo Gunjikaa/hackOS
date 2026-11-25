@@ -1,8 +1,17 @@
+import crypto from 'node:crypto';
 import argon2 from 'argon2';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../lib/db.js';
 import { AppError } from '../../middleware/errorHandler.js';
-import { RegisterInput, SafeUser } from './auth.schema.js';
+import { RegisterInput, SafeUser, LoginInput, LoginResponseUser } from './auth.schema.js';
+
+export const SESSION_COOKIE_NAME = 'hackos_session';
+export const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+export interface LoginResult {
+  rawToken: string;
+  user: LoginResponseUser;
+}
 
 export async function registerUser(input: RegisterInput): Promise<SafeUser> {
   const { email, password, displayName, collegeName } = input;
@@ -65,4 +74,63 @@ export async function registerUser(input: RegisterInput): Promise<SafeUser> {
     }
     throw error;
   }
+}
+
+export async function loginUser(input: LoginInput): Promise<LoginResult> {
+  const { email, password } = input;
+
+  const invalidCredentialsError = new AppError({
+    code: 'INVALID_CREDENTIALS',
+    statusCode: 401,
+    message: 'Invalid email or password.',
+  });
+
+  // 1. Find user by normalized email
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: {
+      profile: true,
+    },
+  });
+
+  if (!user) {
+    throw invalidCredentialsError;
+  }
+
+  // 2. Verify password using Argon2id
+  const passwordMatches = await argon2.verify(user.passwordHash, password);
+  if (!passwordMatches) {
+    throw invalidCredentialsError;
+  }
+
+  // 3. Reject deactivated accounts with same generic error
+  if (user.disabledAt !== null) {
+    throw invalidCredentialsError;
+  }
+
+  // 4. Generate cryptographically secure 32-byte random session token
+  const rawToken = crypto.randomBytes(32).toString('hex');
+
+  // 5. Compute SHA-256 hash to store in DB
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+  const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+
+  // 6. Create session record in PostgreSQL
+  await prisma.session.create({
+    data: {
+      tokenHash,
+      userId: user.id,
+      expiresAt,
+    },
+  });
+
+  // 7. Return raw token (for cookie) and safe user fields
+  return {
+    rawToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      displayName: user.profile?.displayName ?? '',
+    },
+  };
 }

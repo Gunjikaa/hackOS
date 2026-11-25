@@ -1,6 +1,17 @@
-import { Request, Response, NextFunction } from 'express';
-import { registerSchema } from './auth.schema.js';
-import { registerUser } from './auth.service.js';
+import { CookieOptions, Request, Response, NextFunction } from 'express';
+import { env } from '../../config/env.js';
+import { loginSchema, registerSchema } from './auth.schema.js';
+import { loginUser, registerUser, SESSION_COOKIE_NAME, SESSION_TTL_MS } from './auth.service.js';
+
+export function getSessionCookieOptions(): CookieOptions {
+  return {
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    secure: env.NODE_ENV === 'production',
+    maxAge: SESSION_TTL_MS,
+  };
+}
 
 export async function registerController(
   req: Request,
@@ -16,6 +27,30 @@ export async function registerController(
 
     res.status(201).json({
       data: safeUser,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function loginController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    // Validate and normalize login input
+    const validatedInput = loginSchema.parse(req.body);
+
+    // Verify credentials and create session
+    const { rawToken, user } = await loginUser(validatedInput);
+
+    // Set HTTP-only session cookie
+    res.cookie(SESSION_COOKIE_NAME, rawToken, getSessionCookieOptions());
+
+    // Return safe user fields only
+    res.status(200).json({
+      data: user,
     });
   } catch (error) {
     next(error);

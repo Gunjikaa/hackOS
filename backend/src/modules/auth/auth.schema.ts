@@ -29,9 +29,34 @@ export const registerSchema = z.object({
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 
+export const loginSchema = z.object({
+  email: z
+    .string({ required_error: 'Email is required' })
+    .trim()
+    .toLowerCase()
+    .pipe(
+      z
+        .string()
+        .email('Invalid email address')
+        .max(255, 'Email cannot exceed 255 characters')
+    ),
+  password: z
+    .string({ required_error: 'Password is required' })
+    .min(1, 'Password is required')
+    .max(128, 'Password cannot exceed 128 characters'),
+});
+
+export type LoginInput = z.infer<typeof loginSchema>;
+
 export interface SafeUser {
   id: string;
   email: string;
   displayName: string;
   createdAt: Date;
+}
+
+export interface LoginResponseUser {
+  id: string;
+  email: string;
+  displayName: string;
 }
