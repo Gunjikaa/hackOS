@@ -6,6 +6,7 @@ import { env } from './config/env.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { healthRouter } from './modules/health/health.routes.js';
+import { authRouter } from './modules/auth/auth.routes.js';
 
 export function createApp(): Express {
   const app = express();
@@ -34,6 +35,7 @@ export function createApp(): Express {
   // Mount API v1 Routes
   const apiV1Router = express.Router();
   apiV1Router.use('/', healthRouter);
+  apiV1Router.use('/auth', authRouter);
 
   app.use('/api/v1', apiV1Router);
 
