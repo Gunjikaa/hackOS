@@ -1,17 +1,6 @@
-import { CookieOptions, Request, Response, NextFunction } from 'express';
-import { env } from '../../config/env.js';
+import { Request, Response, NextFunction } from 'express';
 import { loginSchema, registerSchema } from './auth.schema.js';
-import { loginUser, registerUser, SESSION_COOKIE_NAME, SESSION_TTL_MS } from './auth.service.js';
-
-export function getSessionCookieOptions(): CookieOptions {
-  return {
-    httpOnly: true,
-    sameSite: 'lax',
-    path: '/',
-    secure: env.NODE_ENV === 'production',
-    maxAge: SESSION_TTL_MS,
-  };
-}
+import { loginUser, registerUser, SESSION_COOKIE_NAME, getSessionCookieOptions } from './auth.service.js';
 
 export async function registerController(
   req: Request,

@@ -1,12 +1,33 @@
 import crypto from 'node:crypto';
 import argon2 from 'argon2';
+import { CookieOptions } from 'express';
 import { Prisma } from '@prisma/client';
+import { env } from '../../config/env.js';
 import { prisma } from '../../lib/db.js';
 import { AppError } from '../../middleware/errorHandler.js';
 import { RegisterInput, SafeUser, LoginInput, LoginResponseUser } from './auth.schema.js';
 
 export const SESSION_COOKIE_NAME = 'hackos_session';
 export const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+export function getSessionCookieOptions(): CookieOptions {
+  return {
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    secure: env.NODE_ENV === 'production',
+    maxAge: SESSION_TTL_MS,
+  };
+}
+
+export function getClearCookieOptions(): CookieOptions {
+  return {
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    secure: env.NODE_ENV === 'production',
+  };
+}
 
 export interface LoginResult {
   rawToken: string;
