@@ -1,7 +1,5 @@
 # HackOS
 
-> An AI-assisted, college-first hackathon and event management platform.
-
 HackOS centralizes the operational lifecycle of college hackathons into a single workspace: event creation, participant vetting, transactional team formation, deadline-enforced submissions, rubric-based judging, and integrated event communication.
 
 ---
